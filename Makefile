@@ -11,7 +11,7 @@ dev_setup: install_requirements load_env
 
 fetch_raw_dataset:
 	@echo "Fetching raw dataset from ANAC's repo..."
-	mkdir -p .data
+	rm -rf .data
 	@python utils/fetch_data.py
 
 fetch_consolidated_dataset:
