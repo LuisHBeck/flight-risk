@@ -1,0 +1,12 @@
+pytest
+pylint
+ipdb
+jupyterlab
+numpy
+pandas
+matplotlib
+seaborn
+scikit-learn
+python-dotenv
+beautifulsoup4
+gdown
