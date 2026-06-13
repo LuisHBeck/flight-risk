@@ -55,6 +55,9 @@ make dev_setup
 ### 5. Configure Environment Variables
 
 Open the generated `.env` file and fill in the required values.
+```sh
+direnv reload .
+```
 
 ### 6. Download the Consolidated Dataset
 
