@@ -10,3 +10,4 @@ scikit-learn
 python-dotenv
 beautifulsoup4
 gdown
+lightgbm
