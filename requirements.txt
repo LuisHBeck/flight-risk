@@ -11,3 +11,8 @@ python-dotenv
 beautifulsoup4
 gdown
 lightgbm
+catboost
+openmeteo-requests
+requests-cache
+retry-requests
+pyarrow
