@@ -283,6 +283,13 @@ def _build_route_features(df: pd.DataFrame) -> pd.DataFrame:
         (df["origin_airport_size"] == 3) & (df["destination_airport_size"] == 3)
     ).astype(int)
     df["is_trunk_route"] = df["route"].isin(TRUNK_ROUTES).astype(int)
+
+    # Duração programada do voo em minutos — voos mais longos têm mais
+    # oportunidade de recuperar atraso no ar, mas também acumulam mais variação
+    df["scheduled_duration_min"] = (
+        df["arr_scheduled"] - df["dep_scheduled"]
+    ).dt.total_seconds() / 60
+
     return df
 
 
