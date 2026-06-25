@@ -58,6 +58,7 @@ Extraídas do horário de partida programado (`dep_scheduled`). As versões cíc
 | `origin_airport_size` | int | Tamanho do aeroporto de origem em escala ordinal: `1` = pequeno, `2` = médio, `3` = grande. |
 | `destination_airport_size` | int | Tamanho do aeroporto de destino em escala ordinal: `1` = pequeno, `2` = médio, `3` = grande. |
 | `is_trunk_route` | int (0/1) | `1` se a rota é considerada troncal de alta frequência no Brasil (ex: ponte aérea RJ-SP, SP-Brasília, SP-Salvador, etc.). |
+| `scheduled_duration_min` | float | Duração programada do voo em minutos (`arr_scheduled - dep_scheduled`). Voos mais longos têm mais oportunidade de recuperar atraso no ar, mas também acumulam mais variação operacional. Calculado a partir de dados disponíveis antes do voo — sem leakage. |
 
 ---
 
@@ -140,7 +141,6 @@ Calculadas sobre o dataset completo e salvas em `airline_hour_stats.pkl` para us
 | `airline_hour_delay_mean` | float | Média histórica de atraso na partida (em minutos) para aquela companhia naquele horário. |
 
 ---
-
 
 ## 🗂️ Arquivos auxiliares
 
