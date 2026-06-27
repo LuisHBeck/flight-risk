@@ -108,12 +108,12 @@ def join_lookup_tables(
         Dataframe with six additional historical statistics columns.
     """
     df = df.join(route_stats, on="route")
-    df["route_hist_delay_mean"].fillna(route_stats["route_hist_delay_mean"].mean(), inplace=True)
-    df["route_hist_delay_std"].fillna(route_stats["route_hist_delay_std"].mean(),   inplace=True)
-    df["route_hist_delay_rate"].fillna(route_stats["route_hist_delay_rate"].mean(), inplace=True)
+    df["route_hist_delay_mean"]  = df["route_hist_delay_mean"].fillna(route_stats["route_hist_delay_mean"].mean())
+    df["route_hist_delay_std"]   = df["route_hist_delay_std"].fillna(route_stats["route_hist_delay_std"].mean())
+    df["route_hist_delay_rate"]  = df["route_hist_delay_rate"].fillna(route_stats["route_hist_delay_rate"].mean())
 
     df = df.join(airline_hour_stats, on=["airline_icao", "dep_hour"])
-    df["airline_hour_delay_rate"].fillna(airline_hour_stats["airline_hour_delay_rate"].mean(), inplace=True)
-    df["airline_hour_delay_mean"].fillna(airline_hour_stats["airline_hour_delay_mean"].mean(), inplace=True)
+    df["airline_hour_delay_rate"] = df["airline_hour_delay_rate"].fillna(airline_hour_stats["airline_hour_delay_rate"].mean())
+    df["airline_hour_delay_mean"] = df["airline_hour_delay_mean"].fillna(airline_hour_stats["airline_hour_delay_mean"].mean())
 
     return df
