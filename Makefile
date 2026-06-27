@@ -9,12 +9,23 @@ load_env:
 
 dev_setup: install_requirements load_env
 
-fetch_raw_dataset:
+fetch_raw_anac_data:
 	@echo "Fetching raw dataset from ANAC's repo..."
-	mkdir -p .data
+	rm -rf .data/raw .data/*.csv .data/*.parquet
 	@python utils/fetch_data.py
+
+fetch_weather_data:
+	@echo "Fetching weather data..."
+	@python utils/weather_data.py
+
+fetch_all: fetch_raw_anac_data fetch_weather_data
 
 fetch_consolidated_dataset:
 	@echo "Fetching consolidate dataset from project's repo..."
 	mkdir -p .data
 	@gdown $(CONSOLIDATED_FILE_ID) --output .data
+
+clean_zone_identifiers:
+	@echo "Removing Zone.Identifier files..."
+	@find .data -name "*:Zone.Identifier" -delete
+	@echo "Done."
