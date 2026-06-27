@@ -93,6 +93,9 @@ docs/_build/
 .pybuilder/
 target/
 
+# CatBoost artifacts
+catboost_info/
+
 # Jupyter Notebook
 
 # IPython
