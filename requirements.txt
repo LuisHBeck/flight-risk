@@ -17,3 +17,4 @@ requests-cache
 retry-requests
 pyarrow
 holidays
+shap
