@@ -13,3 +13,5 @@ gdown
 pyarrow
 holidays
 catboost
+lightgbm==4.6.0
+shap==0.52.0
