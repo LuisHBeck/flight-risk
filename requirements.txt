@@ -10,8 +10,11 @@ scikit-learn
 python-dotenv
 beautifulsoup4
 gdown
+lightgbm
+catboost
+openmeteo-requests
+requests-cache
+retry-requests
 pyarrow
 holidays
-catboost
-lightgbm==4.6.0
-shap==0.52.0
+shap
