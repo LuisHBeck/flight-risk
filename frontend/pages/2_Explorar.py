@@ -19,9 +19,7 @@ def load_airports():
         for _, row in df.iterrows()
     }
 
-st.set_page_config(page_title="Explorar Dataset — Flight Risk", page_icon="📊", layout="wide")
-
-st.title("📊 Explorar Dataset")
+st.title("📊 Análise Histórica")
 st.caption("Análise exploratória interativa de voos domésticos brasileiros (2022–2025)")
 
 DATA_DIR = Path(__file__).parent.parent.parent / ".data"

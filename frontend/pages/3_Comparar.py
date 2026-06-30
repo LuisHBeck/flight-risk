@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
@@ -6,15 +7,10 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 
-st.set_page_config(
-    page_title="Comparar Voos — Flight Risk",
-    page_icon="⚖️",
-    layout="wide",
-)
-
 API_BASE   = os.getenv("API_BASE_URL", "https://flight-risk-430527068071.us-central1.run.app")
 THRESHOLD  = 0.3
 MODEL_DIR  = Path(__file__).parent.parent.parent / "model"
+DATA_DIR   = Path(__file__).parent.parent.parent / ".data"
 
 AIRLINE_NAMES = {
     "ABJ": "Abaeté Aviação",
@@ -102,6 +98,33 @@ def build_gauge(proba):
     ))
     fig.update_layout(height=200, margin=dict(t=10, b=0, l=20, r=20), paper_bgcolor="rgba(0,0,0,0)")
     return fig
+
+
+def log_missing_request(context: dict):
+    try:
+        log_file = DATA_DIR / "missing_requests.jsonl"
+        entry = {"timestamp": datetime.now().isoformat(), **context}
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def friendly_error_msg(exc, context: dict | None = None) -> str:
+    is_no_data = (
+        isinstance(exc, requests.exceptions.HTTPError)
+        and exc.response.status_code in (404, 422, 400)
+    )
+    is_offline = isinstance(exc, requests.exceptions.ConnectionError)
+
+    if is_no_data:
+        if context:
+            log_missing_request(context)
+        return "🗺️ Sem dados para essa combinação — consulta registrada!"
+    elif is_offline:
+        return "🛰️ Serviço fora do ar — tente em instantes."
+    else:
+        return "⚠️ Erro inesperado — tente novamente."
 
 
 # ── Layout ────────────────────────────────────────────────────────────────────
@@ -203,12 +226,14 @@ if compare_btn:
                 }
                 res = call_predict(payload)
                 results.append({**f, "result": res, "dep_str": dep_str, "error": None})
-            except requests.exceptions.ConnectionError:
-                results.append({**f, "result": None, "dep_str": dep_str,
-                                 "error": "API indisponível"})
-            except Exception as e:
-                results.append({**f, "result": None, "dep_str": dep_str,
-                                 "error": str(e)})
+            except Exception as exc:
+                msg = friendly_error_msg(exc, context={
+                    "airline_icao":     airline_code,
+                    "origin_icao":      origin_code,
+                    "destination_icao": dest_code,
+                    "dep_scheduled":    dep_str,
+                })
+                results.append({**f, "result": None, "dep_str": dep_str, "error": msg})
 
     st.session_state["cmp_results"] = results
 
