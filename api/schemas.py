@@ -149,6 +149,15 @@ class LookupFeatures(BaseModel):
     airline_hour_delay_mean: float
 
 
+class ShapExplanation(BaseModel):
+    """SHAP values para uma predição individual."""
+    base_value: float = Field(..., description="Probabilidade média de atraso do modelo (baseline).")
+    values: dict[str, float] = Field(
+        ...,
+        description="Contribuição de cada feature. Positivo = aumenta P(atraso), negativo = diminui.",
+    )
+
+
 class ComputedFeatures(BaseModel):
     """
     Todas as features calculadas durante a inferência.
@@ -178,3 +187,6 @@ class PredictionResponse(BaseModel):
 
     # Features calculadas (auditoria)
     features: ComputedFeatures
+
+    # Explicabilidade SHAP
+    shap_explanation: ShapExplanation

@@ -58,9 +58,19 @@ def init_resources(
     """
     global _predictor, _airport_reference
 
+    import numpy as np
+
     print(f"[startup] Carregando modelo de {models_dir}...")
     _predictor = FlightDelayPredictor.from_dir(models_dir, data_dir)
     print(f"[startup] Modelo carregado. Features: {len(_predictor.feature_names)}")
+
+    print("[startup] Pre-warming SHAP (numba JIT compilation)...")
+    _dummy = pd.DataFrame(
+        [np.zeros(len(_predictor.feature_names))],
+        columns=_predictor.feature_names,
+    )
+    _predictor._explainer.shap_values(_dummy)
+    print("[startup] SHAP pronto.")
 
     print(f"[startup] Carregando airport_reference de {airport_reference_path}...")
     suffix = airport_reference_path.suffix.lower()

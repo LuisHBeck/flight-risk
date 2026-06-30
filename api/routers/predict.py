@@ -21,6 +21,7 @@ from api.schemas import (
     CongestionFeatures,
     WeatherFeatures,
     LookupFeatures,
+    ShapExplanation,
 )
 
 router = APIRouter(prefix="/predict", tags=["prediction"])
@@ -167,7 +168,16 @@ def predict_flight(
 
     label = int(proba >= flight.threshold)
 
-    # 5. Montar resposta
+    # 5. SHAP explanation
+    try:
+        shap_result = predictor.explain_from_enriched(enriched)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro no cálculo SHAP: {exc}",
+        )
+
+    # 6. Montar resposta
     return PredictionResponse(
         airline_icao=flight.airline_icao,
         origin_icao=flight.origin_icao,
@@ -178,4 +188,5 @@ def predict_flight(
         predicted_delayed=label,
         threshold=flight.threshold,
         features=_row_to_computed_features(enriched.iloc[0]),
+        shap_explanation=ShapExplanation(**shap_result),
     )

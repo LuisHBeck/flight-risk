@@ -41,6 +41,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
+import shap
 
 from . import config
 from .features.temporal import build_temporal_features
@@ -254,6 +255,7 @@ class FlightDelayPredictor:
         # Exact feature set & order the model was trained on — the contract
         # every prediction must satisfy.
         self.feature_names = list(model.feature_name_)
+        self._explainer = shap.TreeExplainer(model)
 
     # -- loading -----------------------------------------------------------
 
@@ -356,6 +358,54 @@ class FlightDelayPredictor:
     def _enriched_to_X(self, enriched: pd.DataFrame) -> pd.DataFrame:
         """Encode + align a frame that already went through build_features."""
         return self._align(self._encode(enriched))
+
+    def explain_from_enriched(
+        self,
+        enriched: pd.DataFrame,
+        top_n: int = 15,
+    ) -> dict:
+        """
+        Return SHAP values for each row in ``enriched``.
+
+        Parameters
+        ----------
+        enriched : pd.DataFrame
+            Frame already produced by :meth:`build_features`.
+        top_n : int, optional
+            Keep only the ``top_n`` features ranked by absolute SHAP value.
+            Pass ``None`` to return all features.
+
+        Returns
+        -------
+        dict
+            ``{"base_value": float, "values": {feature: shap_value, ...}}``
+            per row — list when enriched has multiple rows, dict when single row.
+        """
+        X = self._enriched_to_X(enriched)
+        shap_values = self._explainer.shap_values(X)
+
+        # SHAP >= 0.45 changed the binary classifier output to a list of ndarray.
+        # Older versions returned a plain 2-D array for the positive class.
+        if isinstance(shap_values, list):
+            values_matrix = shap_values[1]
+        else:
+            values_matrix = shap_values
+
+        expected = self._explainer.expected_value
+        base_logodds = float(expected[1] if hasattr(expected, "__len__") else expected)
+        # Convert log-odds baseline to probability for readability
+        base_value = float(1 / (1 + np.exp(-base_logodds)))
+
+        results = []
+        for row_values in values_matrix:
+            feature_shap = dict(zip(self.feature_names, row_values.tolist()))
+            if top_n is not None:
+                feature_shap = dict(
+                    sorted(feature_shap.items(), key=lambda kv: abs(kv[1]), reverse=True)[:top_n]
+                )
+            results.append({"base_value": base_value, "values": feature_shap})
+
+        return results[0] if len(results) == 1 else results
 
     def predict_proba(self, df: pd.DataFrame) -> np.ndarray:
         """
