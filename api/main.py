@@ -32,6 +32,7 @@ from fastapi import FastAPI
 
 import api.dependencies as _deps
 from api.dependencies import init_resources
+from api.routers import explain as explain_router
 from api.routers import predict as predict_router
 from api.routers import weather as weather_router
 
@@ -71,6 +72,7 @@ app = FastAPI(
 
 app.include_router(predict_router.router)
 app.include_router(weather_router.router)
+app.include_router(explain_router.router)
 
 # ---------------------------------------------------------------------------
 # Health
