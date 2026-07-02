@@ -202,6 +202,30 @@ def load_airports():
     return df.sort_values("municipality").reset_index(drop=True)
 
 
+@st.cache_data(show_spinner=False)
+def load_route_combos():
+    for fname in ["flights_with_weather.parquet", "flights_features.parquet"]:
+        p = DATA_DIR / fname
+        if not p.exists():
+            continue
+        df = pd.read_parquet(p, columns=["origin_icao", "destination_icao", "airline_icao"])
+        origin_to_dests = (
+            df.groupby("origin_icao")["destination_icao"]
+            .unique()
+            .apply(sorted)
+            .to_dict()
+        )
+        df["route"] = df["origin_icao"] + "_" + df["destination_icao"]
+        route_to_airlines = (
+            df.groupby("route")["airline_icao"]
+            .unique()
+            .apply(sorted)
+            .to_dict()
+        )
+        return origin_to_dests, route_to_airlines
+    return {}, {}
+
+
 def call_weather(origin_icao, destination_icao, dep_scheduled):
     resp = requests.get(
         f"{API_BASE}/weather/",
@@ -237,14 +261,34 @@ icao_from_airline = {
     for k in ALL_AIRLINES
 }
 
+origin_to_dests, route_to_airlines = load_route_combos()
+
 col_form, col_result = st.columns([1, 1], gap="large")
 
 with col_form:
     st.subheader("Dados do voo")
 
-    airline_sel  = st.selectbox("Companhia aérea", airline_labels)
-    origin_sel   = st.selectbox("Aeroporto de origem", airport_options)
-    dest_sel     = st.selectbox("Aeroporto de destino", airport_options, index=min(1, len(airport_options) - 1))
+    # 1. Origem — todas as opções
+    origin_sel  = st.selectbox("Aeroporto de origem", airport_options)
+    origin_code_sel = icao_from_label.get(origin_sel, "")
+
+    # 2. Destino — só destinos com rota a partir da origem escolhida
+    valid_dest_codes = set(origin_to_dests.get(origin_code_sel, []))
+    dest_opts = (
+        [opt for opt in airport_options if icao_from_label.get(opt, "") in valid_dest_codes]
+        if valid_dest_codes else airport_options
+    )
+    dest_sel = st.selectbox("Aeroporto de destino", dest_opts)
+    dest_code_sel = icao_from_label.get(dest_sel, "")
+
+    # 3. Companhia — só as que operam essa rota
+    route_key_sel = f"{origin_code_sel}_{dest_code_sel}"
+    valid_al_codes = set(route_to_airlines.get(route_key_sel, []))
+    airline_opts = (
+        [l for l in airline_labels if icao_from_airline.get(l, "") in valid_al_codes]
+        if valid_al_codes else airline_labels
+    )
+    airline_sel = st.selectbox("Companhia aérea", airline_opts)
 
     c1, c2 = st.columns(2)
     with c1:

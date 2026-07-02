@@ -3,6 +3,7 @@ import os
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
+import pandas as pd
 import plotly.graph_objects as go
 import requests
 import streamlit as st
@@ -36,6 +37,23 @@ ALL_AIRLINES = sorted(AIRLINE_NAMES.keys())
 
 airline_labels   = [f"{k} — {AIRLINE_NAMES[k]}" for k in ALL_AIRLINES]
 icao_from_airline = {f"{k} — {AIRLINE_NAMES[k]}": k for k in ALL_AIRLINES}
+
+
+@st.cache_data(show_spinner=False)
+def load_route_combos():
+    for fname in ["flights_with_weather.parquet", "flights_features.parquet"]:
+        p = DATA_DIR / fname
+        if not p.exists():
+            continue
+        df = pd.read_parquet(p, columns=["origin_icao", "destination_icao"])
+        origin_to_dests = (
+            df.groupby("origin_icao")["destination_icao"]
+            .unique()
+            .apply(sorted)
+            .to_dict()
+        )
+        return origin_to_dests
+    return {}
 
 
 @st.cache_data
@@ -136,16 +154,22 @@ st.divider()
 airports        = load_airports()
 airport_options = airports["label"].tolist()
 icao_from_label = dict(zip(airports["label"], airports["ident"]))
+origin_to_dests = load_route_combos()
 
 # ── Rota e data compartilhadas ────────────────────────────────────────────────
 
 st.subheader("Rota")
 col_orig, col_dest, col_date = st.columns([2, 2, 1])
 with col_orig:
-    origin_sel = st.selectbox("Aeroporto de origem", airport_options, key="cmp_origin")
+    origin_sel  = st.selectbox("Aeroporto de origem", airport_options, key="cmp_origin")
+    origin_code_cmp = icao_from_label.get(origin_sel, "")
 with col_dest:
-    dest_sel = st.selectbox("Aeroporto de destino", airport_options,
-                            index=min(1, len(airport_options) - 1), key="cmp_dest")
+    valid_dest_codes = set(origin_to_dests.get(origin_code_cmp, []))
+    dest_opts = (
+        [opt for opt in airport_options if icao_from_label.get(opt, "") in valid_dest_codes]
+        if valid_dest_codes else airport_options
+    )
+    dest_sel = st.selectbox("Aeroporto de destino", dest_opts, key="cmp_dest")
 with col_date:
     dep_date = st.date_input("Data de partida", value=date.today(), key="cmp_date")
 
