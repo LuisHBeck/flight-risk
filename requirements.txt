@@ -18,3 +18,4 @@ retry-requests
 pyarrow
 holidays
 shap
+google-genai
