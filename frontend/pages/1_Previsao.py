@@ -242,6 +242,22 @@ def call_predict(payload):
     return resp.json()
 
 
+def call_explain_shap(result: dict) -> str:
+    shap = result.get("shap_explanation", {})
+    all_values = shap.get("values", {})
+    top5 = dict(sorted(all_values.items(), key=lambda x: abs(x[1]), reverse=True)[:5])
+    payload = {
+        "shap_explanation": {"base_value": shap.get("base_value", 0), "values": top5},
+        "delay_proba":       result["delay_proba"],
+        "airline_icao":      result["airline_icao"],
+        "origin_icao":       result["origin_icao"],
+        "destination_icao":  result["destination_icao"],
+    }
+    resp = requests.post(f"{API_BASE}/explain/shap", json=payload, timeout=30)
+    resp.raise_for_status()
+    return resp.json().get("explanation", "")
+
+
 # ── Layout ────────────────────────────────────────────────────────────────────
 
 st.title("✈️ Flight Risk")
@@ -348,6 +364,10 @@ with col_result:
 
                     result = call_predict(payload)
                     st.session_state["result"] = result
+                    try:
+                        st.session_state["explanation"] = call_explain_shap(result)
+                    except Exception:
+                        st.session_state["explanation"] = ""
 
                 except Exception as exc:
                     show_api_error(exc, context={
@@ -382,6 +402,19 @@ with col_result:
         )
 
         st.plotly_chart(build_gauge(proba), use_container_width=True)
+
+        explanation = st.session_state.get("explanation", "")
+        if explanation:
+            st.markdown(
+                f"""
+                <div style="border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;
+                            padding:16px 18px; margin-top:4px; margin-bottom:8px;
+                            font-size:14px; color:#334155; line-height:1.65">
+                    🤖 {explanation}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         hist_mean = lookup.get("route_hist_delay_mean")
         if result.get("predicted_delayed") == 1 and hist_mean is not None:
