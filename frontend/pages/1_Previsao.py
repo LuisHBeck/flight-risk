@@ -399,6 +399,7 @@ with col_result:
         )
 
         st.plotly_chart(build_gauge(proba), use_container_width=True)
+        st.caption("— Limiar de risco: 30%")
 
         # Explicação LLM — carrega em paralelo ao restante da página
         if st.session_state.get("explanation") is None:
