@@ -364,10 +364,7 @@ with col_result:
 
                     result = call_predict(payload)
                     st.session_state["result"] = result
-                    try:
-                        st.session_state["explanation"] = call_explain_shap(result)
-                    except Exception:
-                        st.session_state["explanation"] = ""
+                    st.session_state["explanation"] = None  # marca como pendente
 
                 except Exception as exc:
                     show_api_error(exc, context={
@@ -402,6 +399,14 @@ with col_result:
         )
 
         st.plotly_chart(build_gauge(proba), use_container_width=True)
+
+        # Explicação LLM — carrega em paralelo ao restante da página
+        if st.session_state.get("explanation") is None:
+            with st.spinner("🤖 Analisando os principais fatores..."):
+                try:
+                    st.session_state["explanation"] = call_explain_shap(result)
+                except Exception:
+                    st.session_state["explanation"] = ""
 
         explanation = st.session_state.get("explanation", "")
         if explanation:
