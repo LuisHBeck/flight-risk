@@ -18,6 +18,3 @@ retry-requests
 pyarrow
 holidays
 shap
-langchain
-langchain-core
-langchain-google-genai
