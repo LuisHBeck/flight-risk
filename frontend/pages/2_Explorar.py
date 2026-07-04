@@ -23,7 +23,7 @@ st.title("📊 Análise Histórica")
 st.caption("Análise exploratória interativa de voos domésticos brasileiros (2022–2025)")
 
 DATA_DIR = Path(__file__).parent.parent.parent / ".data"
-CANDIDATES = ["flights_features.parquet", "flights_with_weather.parquet"]
+CANDIDATES = ["flights_with_weather.parquet", "flights_features.parquet"]
 
 DATA_PATH = next((DATA_DIR / f for f in CANDIDATES if (DATA_DIR / f).exists()), None)
 
