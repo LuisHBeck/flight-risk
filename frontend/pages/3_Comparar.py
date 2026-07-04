@@ -65,7 +65,7 @@ def load_route_combos():
 
 @st.cache_data
 def load_airports():
-    df = pd.read_csv(MODEL_DIR / "airports_reference.csv")
+    df = pd.read_csv(DATA_DIR / "airports_reference.csv")
     df = df.dropna(subset=["ident"])
     df["label"] = df.apply(
         lambda r: f"{r['ident']} — {r['municipality']}" if str(r.get("municipality", "")) not in ("", "nan") else r["ident"],

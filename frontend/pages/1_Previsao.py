@@ -193,7 +193,7 @@ def load_route_hour_stats():
 
 @st.cache_data
 def load_airports():
-    df = pd.read_csv(MODEL_DIR / "airports_reference.csv")
+    df = pd.read_csv(DATA_DIR / "airports_reference.csv")
     df = df.dropna(subset=["ident"])
     df["label"] = df.apply(
         lambda r: f"{r['ident']} — {r['municipality']}" if pd.notna(r.get("municipality")) else r["ident"],

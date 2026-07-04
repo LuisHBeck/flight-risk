@@ -9,7 +9,7 @@ MODEL_DIR = Path(__file__).parent.parent.parent / "model"
 
 @st.cache_data
 def load_airports():
-    path = MODEL_DIR / "airports_reference.csv"
+    path = DATA_DIR / "airports_reference.csv"
     if not path.exists():
         return {}
     df = pd.read_csv(path).dropna(subset=["ident"])
