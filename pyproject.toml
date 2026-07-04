@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flight-risk"
+version = "0.1.0"
+description = "Binary flight departure-delay prediction (LightGBM)."
+requires-python = ">=3.10"
+dependencies = [
+    "lightgbm>=4.0",
+    "scikit-learn>=1.3",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "pyarrow>=14.0",
+    "joblib>=1.3",
+    "holidays>=0.40",
+    "matplotlib>=3.7",
+    "seaborn>=0.13",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "httpx>=0.27",
+    "shap>=0.45",
+    "google-genai>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+# Console entrypoints
+[project.scripts]
+flight-risk-features = "scripts.run_features:main"
+flight-risk-train    = "scripts.run_train:main"
+flight-risk-predict  = "scripts.run_predict:main"
+flight-risk-api      = "scripts.run_api:main"
+
+[tool.setuptools.packages.find]
+include = ["flight_risk*", "scripts*", "api*"]
