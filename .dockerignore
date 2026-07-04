@@ -1,0 +1,16 @@
+.git/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.data/*.parquet
+.data/cache/
+.data/*.csv
+!.data/airports_reference.csv
+!.data/flights_with_weather.parquet
+!.data/flights_features.parquet
+notebooks/
+utils/
+docs/
+.env
+.envrc
