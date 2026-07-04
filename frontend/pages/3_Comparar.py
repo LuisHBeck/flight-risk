@@ -301,14 +301,6 @@ if "cmp_results" in st.session_state:
         airline_code = icao_from_airline[r["airline"]]
 
         with col:
-            if is_best:
-                st.markdown(
-                    f"<div style='background:{color}18; border:2px solid {color}; "
-                    f"border-radius:10px; padding:12px; text-align:center; margin-bottom:8px'>"
-                    f"<b style='color:{color}'>✅ Melhor opção</b></div>",
-                    unsafe_allow_html=True,
-                )
-
             st.markdown(
                 f"<div style='text-align:center; font-size:17px; font-weight:700'>"
                 f"{airline_code} — {r['dep'].strftime('%H:%M')}</div>"
@@ -330,3 +322,11 @@ if "cmp_results" in st.session_state:
                 st.caption(f"Rota historicamente: {hist_rate*100:.1f}%")
             if al_rate is not None:
                 st.caption(f"Companhia nesse horário: {al_rate*100:.1f}%")
+
+            if is_best:
+                st.markdown(
+                    f"<div style='background:{color}18; border:2px solid {color}; "
+                    f"border-radius:10px; padding:10px; text-align:center; margin-top:10px'>"
+                    f"<b style='color:{color}'>✅ Melhor opção</b></div>",
+                    unsafe_allow_html=True,
+                )
