@@ -14,7 +14,7 @@ devs = [
         "github": "https://github.com/luishbeck",
     },
     {
-        "name": "Cliscia Fontura",
+        "name": "Cliscia Fontoura",
         "role": "Cientista de Dados",
         "github_user": "Cliscia",
         "linkedin": "https://linkedin.com/in/cliscia-fontoura",
