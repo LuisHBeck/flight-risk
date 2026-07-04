@@ -6,6 +6,27 @@ import streamlit as st
 
 MODEL_DIR = Path(__file__).parent.parent.parent / "model"
 
+AIRLINE_NAMES = {
+    "ABJ": "Abaeté Aviação",
+    "ACN": "Azul Conecta",
+    "AEB": "Avion Express Brasil",
+    "ASO": "Avianca Brasil",
+    "AZU": "Azul Linhas Aéreas",
+    "BPC": "Braspress Air Cargo",
+    "CQB": "Apuí Táxi Aéreo",
+    "GLO": "Gol Linhas Aéreas",
+    "LTG": "LATAM Cargo Brasil",
+    "MWM": "Modern Logistics",
+    "OMI": "OMNI Táxi Aéreo",
+    "PAM": "MAP Linhas Aéreas",
+    "PLS": "Placar Linhas Aéreas",
+    "PTB": "Passaredo",
+    "SID": "Sideral Linhas Aéreas",
+    "TAM": "LATAM Brasil",
+    "TOT": "Total Express",
+    "TTL": "Total Linhas Aéreas",
+}
+
 
 @st.cache_data
 def load_airports():
@@ -21,6 +42,12 @@ def load_airports():
 
 st.title("📊 Análise Histórica")
 st.caption("Análise exploratória interativa de voos domésticos brasileiros (2022–2025)")
+
+st.markdown("""
+<style>
+[data-testid="stMetricValue"] { font-size: 1rem; word-break: break-word; }
+</style>
+""", unsafe_allow_html=True)
 
 DATA_DIR = Path(__file__).parent.parent.parent / ".data"
 CANDIDATES = ["flights_with_weather.parquet", "flights_features.parquet"]
@@ -75,9 +102,6 @@ with st.spinner("Carregando dataset..."):
 with st.sidebar:
     st.header("Filtros")
 
-    airlines = sorted(df["airline_icao"].dropna().unique())
-    sel_airlines = st.multiselect("Companhia aérea", airlines)
-
     if "origin_icao" in df.columns:
         origin_icao_list = sorted(df["origin_icao"].dropna().unique())
         origin_label_list = [airport_labels.get(c, c) for c in origin_icao_list]
@@ -87,15 +111,33 @@ with st.sidebar:
     else:
         sel_origins = []
 
+    if sel_origins:
+        available_airlines = sorted(
+            df[df["origin_icao"].isin(sel_origins)]["airline_icao"].dropna().unique()
+        )
+    else:
+        available_airlines = sorted(df["airline_icao"].dropna().unique())
+
+    airline_label_list = [
+        f"{code} — {AIRLINE_NAMES[code]}" if code in AIRLINE_NAMES else code
+        for code in available_airlines
+    ]
+    airline_label_to_icao = {
+        (f"{code} — {AIRLINE_NAMES[code]}" if code in AIRLINE_NAMES else code): code
+        for code in available_airlines
+    }
+    sel_airline_labels = st.multiselect("Companhia aérea", airline_label_list)
+    sel_airlines = [airline_label_to_icao[l] for l in sel_airline_labels]
+
     min_date = df["dep_scheduled"].min().date()
     max_date = df["dep_scheduled"].max().date()
     date_range = st.date_input("Período", value=(min_date, max_date), min_value=min_date, max_value=max_date)
 
 filtered = df.copy()
-if sel_airlines:
-    filtered = filtered[filtered["airline_icao"].isin(sel_airlines)]
 if sel_origins:
     filtered = filtered[filtered["origin_icao"].isin(sel_origins)]
+if sel_airlines:
+    filtered = filtered[filtered["airline_icao"].isin(sel_airlines)]
 if len(date_range) == 2:
     filtered = filtered[
         (filtered["dep_scheduled"].dt.date >= date_range[0]) &
@@ -113,13 +155,23 @@ route_delay = (
     filtered.groupby("route")["is_delayed"].mean().sort_values(ascending=False)
     if total > 0 else pd.Series(dtype=float)
 )
-worst_route = route_delay.index[0] if len(route_delay) > 0 else "—"
+def icao_to_city(icao):
+    label = airport_labels.get(icao, icao)
+    return label.split(" — ", 1)[1] if " — " in label else label
+
+worst_route_key = route_delay.index[0] if len(route_delay) > 0 else None
+if worst_route_key:
+    orig, dest = worst_route_key.split("_", 1)
+    worst_route = f"{icao_to_city(orig)} → {icao_to_city(dest)}"
+else:
+    worst_route = "—"
 
 airline_delay = (
     filtered.groupby("airline_icao")["is_delayed"].mean().sort_values()
     if total > 0 else pd.Series(dtype=float)
 )
-best_airline = airline_delay.index[0] if len(airline_delay) > 0 else "—"
+best_airline_code = airline_delay.index[0] if len(airline_delay) > 0 else "—"
+best_airline = AIRLINE_NAMES.get(best_airline_code, best_airline_code)
 
 k1.metric("Taxa de atraso",     f"{delay_rate*100:.1f}%")
 k2.metric("Voos no período",    f"{total:,}")
