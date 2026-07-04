@@ -284,8 +284,11 @@ col_form, col_result = st.columns([1, 1], gap="large")
 with col_form:
     st.subheader("Dados do voo")
 
+    ca, cb = st.columns(2)
+
     # 1. Origem — todas as opções
-    origin_sel  = st.selectbox("Aeroporto de origem", airport_options)
+    with ca:
+        origin_sel  = st.selectbox("Aeroporto de origem", airport_options)
     origin_code_sel = icao_from_label.get(origin_sel, "")
 
     # 2. Destino — só destinos com rota a partir da origem escolhida
@@ -294,8 +297,11 @@ with col_form:
         [opt for opt in airport_options if icao_from_label.get(opt, "") in valid_dest_codes]
         if valid_dest_codes else airport_options
     )
-    dest_sel = st.selectbox("Aeroporto de destino", dest_opts)
+    with cb:
+        dest_sel = st.selectbox("Aeroporto de destino", dest_opts)
     dest_code_sel = icao_from_label.get(dest_sel, "")
+
+    st.write("")
 
     # 3. Companhia — só as que operam essa rota
     route_key_sel = f"{origin_code_sel}_{dest_code_sel}"
@@ -306,12 +312,16 @@ with col_form:
     )
     airline_sel = st.selectbox("Companhia aérea", airline_opts)
 
+    st.write("")
+
+    dep_date = st.date_input("Data de partida", value=date.today(), max_value=date.today() + timedelta(days=15))
+
+    st.write("")
+
     c1, c2 = st.columns(2)
     with c1:
-        dep_date     = st.date_input("Data de partida", value=date.today(), max_value=date.today() + timedelta(days=15))
         dep_time_val = st.time_input("Hora de partida", value=time(8, 0), step=300)
     with c2:
-        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
         arr_time_val = st.time_input("Hora de chegada", value=time(9, 30), step=300)
 
     predict_btn = st.button("🔍 Prever Atraso", use_container_width=True, type="primary")
