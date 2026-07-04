@@ -45,20 +45,26 @@ def load_route_combos():
         p = DATA_DIR / fname
         if not p.exists():
             continue
-        df = pd.read_parquet(p, columns=["origin_icao", "destination_icao"])
+        df = pd.read_parquet(p, columns=["origin_icao", "destination_icao", "airline_icao"])
         origin_to_dests = (
             df.groupby("origin_icao")["destination_icao"]
             .unique()
             .apply(sorted)
             .to_dict()
         )
-        return origin_to_dests
-    return {}
+        df["route"] = df["origin_icao"] + "_" + df["destination_icao"]
+        route_to_airlines = (
+            df.groupby("route")["airline_icao"]
+            .unique()
+            .apply(sorted)
+            .to_dict()
+        )
+        return origin_to_dests, route_to_airlines
+    return {}, {}
 
 
 @st.cache_data
 def load_airports():
-    import pandas as pd
     df = pd.read_csv(MODEL_DIR / "airports_reference.csv")
     df = df.dropna(subset=["ident"])
     df["label"] = df.apply(
@@ -154,7 +160,7 @@ st.divider()
 airports        = load_airports()
 airport_options = airports["label"].tolist()
 icao_from_label = dict(zip(airports["label"], airports["ident"]))
-origin_to_dests = load_route_combos()
+origin_to_dests, route_to_airlines = load_route_combos()
 
 # ── Rota e data compartilhadas ────────────────────────────────────────────────
 
@@ -171,7 +177,7 @@ with col_dest:
     )
     dest_sel = st.selectbox("Aeroporto de destino", dest_opts, key="cmp_dest")
 with col_date:
-    dep_date = st.date_input("Data de partida", value=date.today(), key="cmp_date")
+    dep_date = st.date_input("Data de partida", value=date.today(), max_value=date.today() + timedelta(days=15), key="cmp_date")
 
 st.divider()
 
@@ -182,14 +188,28 @@ st.subheader("Opções de voo")
 NUM_FLIGHTS = 3
 flight_inputs = []
 
+dest_code_cmp   = icao_from_label.get(dest_sel, "")
+route_key_cmp   = f"{origin_code_cmp}_{dest_code_cmp}"
+valid_al_codes  = set(route_to_airlines.get(route_key_cmp, []))
+avail_al_labels = (
+    [l for l in airline_labels if icao_from_airline.get(l, "") in valid_al_codes]
+    if valid_al_codes else airline_labels
+)
+
+DEFAULTS = ["TAM", "AZU", "GLO"]
+
 cols = st.columns(NUM_FLIGHTS, gap="medium")
 for i, col in enumerate(cols):
     with col:
         st.markdown(f"**Voo {i+1}**")
-        al  = st.selectbox("Companhia", airline_labels, key=f"al_{i}",
-                           index=ALL_AIRLINES.index("TAM") if i == 0
-                           else ALL_AIRLINES.index("AZU") if i == 1
-                           else ALL_AIRLINES.index("GLO"))
+        default_code  = DEFAULTS[i]
+        default_label = f"{default_code} — {AIRLINE_NAMES[default_code]}"
+        default_idx   = (
+            avail_al_labels.index(default_label)
+            if default_label in avail_al_labels
+            else 0
+        )
+        al = st.selectbox("Companhia", avail_al_labels, key=f"al_{i}", index=default_idx)
         dep = st.time_input("Saída", value=time(7 + i * 3, 0), step=300, key=f"dep_{i}")
         arr = st.time_input("Chegada", value=time(8 + i * 3, 30), step=300, key=f"arr_{i}")
         active = st.checkbox("Incluir na comparação", value=True, key=f"active_{i}")

@@ -308,7 +308,7 @@ with col_form:
 
     c1, c2 = st.columns(2)
     with c1:
-        dep_date     = st.date_input("Data de partida", value=date.today())
+        dep_date     = st.date_input("Data de partida", value=date.today(), max_value=date.today() + timedelta(days=15))
         dep_time_val = st.time_input("Hora de partida", value=time(8, 0), step=300)
     with c2:
         st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
@@ -446,7 +446,7 @@ with col_result:
                 st.write(f"🌡 {weather.get('destination_wx_temperature_2m', '—')} °C")
                 st.write(f"🌧 Precipitação: {weather.get('destination_wx_precipitation', '—')} mm")
                 st.write(f"💨 Vento: {weather.get('destination_wx_windspeed_10m', '—')} km/h")
-                st.write(f"🌪 Rajadas: {weather.get('origin_wx_windgusts_10m', '—')} km/h")
+                st.write(f"🌪 Rajadas: {weather.get('destination_wx_windgusts_10m', '—')} km/h")
                 st.write(f"☁️ Cobertura: {weather.get('destination_wx_cloudcover', '—')}%")
 
             st.divider()
