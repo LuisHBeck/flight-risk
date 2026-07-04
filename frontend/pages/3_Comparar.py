@@ -294,7 +294,7 @@ if "cmp_results" in st.session_state:
     st.subheader("Resultado da comparação")
     result_cols = st.columns(len(valid), gap="large")
 
-    for col, r in zip(result_cols, valid):
+    for idx, (col, r) in enumerate(zip(result_cols, valid)):
         proba        = r["result"]["delay_proba"]
         icon, label, color = risk_info(proba)
         is_best      = (r is valid[best_idx])
@@ -308,7 +308,7 @@ if "cmp_results" in st.session_state:
                 f"{AIRLINE_NAMES.get(airline_code, airline_code)}</div>",
                 unsafe_allow_html=True,
             )
-            st.plotly_chart(build_gauge(proba), use_container_width=True)
+            st.plotly_chart(build_gauge(proba), use_container_width=True, key=f"gauge_{idx}")
             st.markdown(
                 f"<div style='text-align:center; font-size:16px; color:{color}'>"
                 f"{icon} {label}</div>",
