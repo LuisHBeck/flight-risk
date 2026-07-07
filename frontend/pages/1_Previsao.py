@@ -314,15 +314,19 @@ with col_form:
 
     st.write("")
 
-    dep_date = st.date_input("Data de partida", value=date.today(), max_value=date.today() + timedelta(days=15))
+    dep_date = st.date_input("Data de partida", value=date.today(), min_value=date.today(), max_value=date.today() + timedelta(days=15))
 
     st.write("")
 
+    _dep_default = datetime.now() + timedelta(hours=1)
+    _dep_default = _dep_default.replace(second=0, microsecond=0, minute=(_dep_default.minute // 5) * 5)
+    _arr_default = _dep_default + timedelta(hours=1, minutes=30)
+
     c1, c2 = st.columns(2)
     with c1:
-        dep_time_val = st.time_input("Hora de partida", value=time(8, 0), step=300)
+        dep_time_val = st.time_input("Hora de partida", value=_dep_default.time(), step=300)
     with c2:
-        arr_time_val = st.time_input("Hora de chegada", value=time(9, 30), step=300)
+        arr_time_val = st.time_input("Hora de chegada", value=_arr_default.time(), step=300)
 
     predict_btn = st.button("🔍 Prever Atraso", use_container_width=True, type="primary")
 
@@ -332,6 +336,8 @@ with col_result:
     if predict_btn:
         if origin_sel == dest_sel:
             st.warning("Origem e destino não podem ser iguais.")
+        elif datetime.combine(dep_date, dep_time_val) <= datetime.now():
+            st.warning("Horário de partida deve ser no futuro.")
         else:
             airline_code = icao_from_airline[airline_sel]
             origin_code  = icao_from_label[origin_sel]
